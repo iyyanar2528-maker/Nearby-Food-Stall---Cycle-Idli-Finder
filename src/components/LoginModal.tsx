@@ -96,7 +96,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   if (!isOpen) return null;
 
-  // 1. Send OTP to Real Mobile Number & Firebase Realtime
+  // 1. Send Real OTP to Mobile Number via Google Firebase SMS Gateway
   const handleSendOtp = async (e?: React.SyntheticEvent) => {
     if (e) {
       e.preventDefault();
@@ -131,8 +131,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setIsLoading(true);
 
     try {
-      // 1. Trigger backend SQLite OTP creation & Firestore document sync
-      const res = await api.auth.sendOtp({
+      // Dispatch real SMS via Google Firebase Phone Auth
+      console.log(`📱 Triggering Google Firebase real SMS to +91 ${cleanPhone}...`);
+      const phoneRes = await firebasePhoneAuth.sendRealSmsOtp(cleanPhone, 'recaptcha-container');
+
+      if (!phoneRes.success) {
+        throw new Error(phoneRes.error || 'Could not send SMS. Please verify your mobile number.');
+      }
+
+      // Also notify backend / firestore if online
+      api.auth.sendOtp({
         phone: cleanPhone,
         name: name.trim(),
         role,
@@ -142,40 +150,22 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         businessAddress: businessAddress.trim() || undefined,
         fssaiNumber: fssaiNumber.trim() || undefined,
         stallId: role === 'moving_stall_owner' ? 'spot-cycle-1' : role === 'shop_owner' ? 'spot-mh-1' : undefined
-      });
+      }).catch(() => {});
 
-      // 2. Real-time Firebase Cloud Firestore OTP Sync
-      if (res.otp) {
-        firebaseSync.sendRealtimeOtp(cleanPhone, res.otp, {
-          name: name.trim(),
-          role,
-          stateRegion
-        });
-      }
-
-      // 3. Trigger Google Firebase Phone Auth SMS Gateway
-      firebasePhoneAuth.sendRealSmsOtp(cleanPhone, 'recaptcha-container').then((phoneRes) => {
-        if (phoneRes.success) {
-          console.log('✅ Google Firebase SMS dispatched successfully to mobile carrier!');
-        } else {
-          console.log('ℹ️ Firebase Phone Auth fallback info:', phoneRes.error);
-        }
-      }).catch((e) => console.warn('Firebase SMS delivery warning:', e));
-
-      setSmsBody(res.smsBody || `[Street Radar] Your verification code is ${res.otp}. Valid for 10 minutes.`);
-      setOtp(''); // Keep field 100% empty for user manual entry
+      setOtp('');
       setOtpSentSuccess(true);
-      setResendTimer(30);
+      setResendTimer(60);
       setStep('otp');
       sound.playSuccess();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to send OTP. Please check your connection.');
+      console.error('Send OTP Error:', err);
+      setErrorMsg(err.message || 'Failed to dispatch real SMS OTP. Please check your network.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 2. Resend OTP handler
+  // 2. Resend Real OTP handler
   const handleResendOtp = async (e?: React.SyntheticEvent) => {
     if (e) {
       e.preventDefault();
@@ -191,30 +181,23 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setErrorMsg('');
 
     try {
-      const res = await api.auth.resendOtp(cleanPhone);
-      if (res.otp) {
-        firebaseSync.sendRealtimeOtp(cleanPhone, res.otp, {
-          name: name.trim(),
-          role,
-          stateRegion
-        });
+      const phoneRes = await firebasePhoneAuth.sendRealSmsOtp(cleanPhone, 'recaptcha-container');
+      if (!phoneRes.success) {
+        throw new Error(phoneRes.error || 'Failed to resend SMS.');
       }
 
-      firebasePhoneAuth.sendRealSmsOtp(cleanPhone, 'recaptcha-container').catch(console.warn);
-
-      setSmsBody(res.smsBody || `[Street Radar] Your fresh verification code is ${res.otp}. Valid for 10 minutes.`);
       setOtp('');
       setOtpSentSuccess(true);
-      setResendTimer(30);
+      setResendTimer(60);
       sound.playSuccess();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to resend OTP.');
+      setErrorMsg(err.message || 'Failed to resend SMS.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 3. Verify OTP & Submit to Backend Database + Firebase
+  // 3. Verify Real SMS Code with Google Firebase Telecom Gateway
   const handleVerifyOtp = async (e?: React.SyntheticEvent) => {
     if (e) {
       e.preventDefault();
@@ -240,54 +223,38 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     const cleanPhone = phone.replace(/\D/g, '').slice(-10);
 
     try {
-      const res = await api.auth.verifyOtp({
+      // 1. Confirm code with real Google Firebase SMS confirmation result
+      const verifyResult = await firebasePhoneAuth.verifyRealSmsOtp(cleanOtp);
+      if (!verifyResult.success) {
+        throw new Error(verifyResult.error || 'Invalid OTP code. Please check your SMS and re-enter.');
+      }
+
+      const realUser = verifyResult.user;
+      const userProfile: UserProfile = {
+        id: realUser?.uid || `user-${Date.now()}`,
+        name: name.trim() || 'Food Lover',
         phone: cleanPhone,
-        otp: cleanOtp,
-        name: name.trim(),
         role,
         language: currentLang,
         stateRegion,
         businessName: businessName.trim() || undefined,
         businessAddress: businessAddress.trim() || undefined,
         fssaiNumber: fssaiNumber.trim() || undefined,
-        stallId: role === 'moving_stall_owner' ? 'spot-cycle-1' : role === 'shop_owner' ? 'spot-mh-1' : undefined
-      });
+        stallId: role === 'moving_stall_owner' ? 'spot-cycle-1' : role === 'shop_owner' ? 'spot-mh-1' : undefined,
+        createdAt: new Date().toISOString()
+      };
 
-      if (!res.user) {
-        throw new Error('Verification failed. Please check the code and try again.');
-      }
-
-      localStorage.setItem('budget_eats_user', JSON.stringify(res.user));
-      firebaseSync.syncUserProfile(res.user);
+      localStorage.setItem('budget_eats_user', JSON.stringify(userProfile));
+      firebaseSync.syncUserProfile(userProfile);
 
       setIsLoading(false);
-      confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+      confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
       sound.playSuccess();
-      onLoginSuccess(res.user);
+      onLoginSuccess(userProfile);
       onClose();
     } catch (err: any) {
       setIsLoading(false);
-      setErrorMsg(err.message || 'Invalid OTP code. Please check your SMS and re-enter.');
-    }
-  };
-
-  // 1-Click Fast Demo Login Helper
-  const handleDemoLogin = async (demoRole: UserRole) => {
-    sound.playClick();
-    setIsLoading(true);
-
-    try {
-      const res = await api.auth.demoLogin(demoRole);
-      const user = res.user;
-      localStorage.setItem('budget_eats_user', JSON.stringify(user));
-      firebaseSync.syncUserProfile(user);
-      setIsLoading(false);
-      confetti({ particleCount: 40, spread: 50, origin: { y: 0.6 } });
-      sound.playSuccess();
-      onLoginSuccess(user);
-      onClose();
-    } catch {
-      setIsLoading(false);
+      setErrorMsg(err.message || 'Invalid SMS verification code. Please check your SMS inbox and re-enter.');
     }
   };
 
@@ -378,48 +345,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
         </div>
 
-        {/* 1-Click Fast Demo Logins */}
-        <div className="py-3 border-b border-[#262626]">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-mono font-bold uppercase text-[#8E8E93] tracking-wider flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#E2FF3B]" />
-              {t.demoLoginBtn}:
-            </span>
+        {/* Real Mobile SMS Notice */}
+        <div className="py-2.5 px-3 rounded-2xl bg-[#1C1C1E] border border-[#2E2E32] flex items-center justify-between text-xs font-mono text-slate-300">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#30D158] animate-pulse shrink-0" />
+            <span className="text-[11px]">Real Cellular SMS Gateway (+91 India)</span>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('customer')}
-              className="px-2 py-1.5 rounded-xl bg-[#1C1C1E] hover:bg-[#2C2C2E] border border-[#2E2E32] hover:border-[#E2FF3B]/50 text-left transition-all group"
-            >
-              <div className="text-[11px] font-bold text-[#F0F0F0] flex items-center gap-1">
-                <span>😋</span> Foodie
-              </div>
-              <div className="text-[9px] text-[#8E8E93] font-mono group-hover:text-[#E2FF3B]">Ananya (MH/TN)</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('moving_stall_owner')}
-              className="px-2 py-1.5 rounded-xl bg-[#1C1C1E] hover:bg-[#2C2C2E] border border-[#2E2E32] hover:border-[#E2FF3B]/50 text-left transition-all group"
-            >
-              <div className="text-[11px] font-bold text-[#F0F0F0] flex items-center gap-1">
-                <span>🚲</span> Cycle Idli
-              </div>
-              <div className="text-[9px] text-[#8E8E93] font-mono group-hover:text-[#E2FF3B]">Muthu Anna (TN)</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('shop_owner')}
-              className="px-2 py-1.5 rounded-xl bg-[#1C1C1E] hover:bg-[#2C2C2E] border border-[#2E2E32] hover:border-[#E2FF3B]/50 text-left transition-all group"
-            >
-              <div className="text-[11px] font-bold text-[#F0F0F0] flex items-center gap-1">
-                <span>🏪</span> Shopkeeper
-              </div>
-              <div className="text-[9px] text-[#8E8E93] font-mono group-hover:text-[#E2FF3B]">Aaba Shinde (MH)</div>
-            </button>
-          </div>
+          <span className="text-[10px] text-[#E2FF3B] font-bold uppercase tracking-wider bg-[#E2FF3B]/10 px-2 py-0.5 rounded border border-[#E2FF3B]/20">
+            Real OTP
+          </span>
         </div>
 
         {/* Step 1: User Mobile Number & Details */}
