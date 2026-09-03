@@ -336,6 +336,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </button>
         </div>
 
+        {/* Welcome Tagline Banner */}
+        <div className="my-3 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-[#E2FF3B]/15 via-[#F59E0B]/10 to-transparent border border-[#E2FF3B]/30 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">🍲</span>
+            <div>
+              <p className="text-xs font-bold text-white">Welcome to Street Radar!</p>
+              <p className="text-[11px] font-medium text-[#E2FF3B]">Eat first, thank me later ✨</p>
+            </div>
+          </div>
+          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-black/40 text-slate-300 border border-white/10 shrink-0">
+            Quick OTP
+          </span>
+        </div>
+
         {/* Language Switcher */}
         <div className="flex items-center justify-between py-3 border-b border-[#262626]">
           <div className="flex items-center gap-1.5 text-xs text-[#8E8E93] font-mono">

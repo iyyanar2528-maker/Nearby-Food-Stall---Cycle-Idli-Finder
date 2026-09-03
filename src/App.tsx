@@ -53,6 +53,8 @@ import {
 import { sound } from './utils/audioFeedback';
 import { api } from './lib/api';
 import { firebaseSync } from './lib/firebaseSync';
+import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
   const [spots, setSpots] = useState<FoodSpot[]>(INITIAL_FOOD_SPOTS);
@@ -80,7 +82,15 @@ export default function App() {
   });
 
   // Modals & Navigation state
-  const [isLoginOpen, setIsLoginOpen] = useState<boolean>(false);
+  const [isLoginOpen, setIsLoginOpen] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('budget_eats_user');
+      return !stored; // Show login page first when visiting website
+    } catch {
+      return true;
+    }
+  });
+  const [welcomeBanner, setWelcomeBanner] = useState<{ show: boolean; name: string } | null>(null);
   const [loginInitialRole, setLoginInitialRole] = useState<UserRole>('customer');
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState<boolean>(false);
   const [isMovingStallPortalOpen, setIsMovingStallPortalOpen] = useState<boolean>(false);
@@ -232,6 +242,7 @@ export default function App() {
 
   const handleLoginSuccess = (user: UserProfile) => {
     setCurrentUser(user);
+    setIsLoginOpen(false);
     try {
       localStorage.setItem('budget_eats_user', JSON.stringify(user));
     } catch {
@@ -240,12 +251,32 @@ export default function App() {
     if (user.stateRegion && user.stateRegion !== 'all') {
       setSelectedState(user.stateRegion);
     }
+    sound.playSuccess();
+    try {
+      confetti({
+        particleCount: 90,
+        spread: 70,
+        origin: { y: 0.85 }
+      });
+    } catch {}
+
+    setWelcomeBanner({
+      show: true,
+      name: user.name || 'Foodie'
+    });
+
+    // Auto-dismiss banner after 14 seconds
+    setTimeout(() => {
+      setWelcomeBanner((prev) => (prev ? { ...prev, show: false } : null));
+    }, 14000);
   };
 
   const handleLogout = () => {
     sound.playClick();
     setCurrentUser(null);
     localStorage.removeItem('budget_eats_user');
+    setIsLoginOpen(true);
+    setWelcomeBanner(null);
   };
 
   const handleOpenLoginWithRole = (role: UserRole) => {
@@ -702,6 +733,66 @@ export default function App() {
         onNavigate={(spot) => setNavigatingSpot(spot)}
         currentLang={currentLang}
       />
+
+      {/* Bottom Welcome Banner: Eat first, thank me later */}
+      <AnimatePresence>
+        {welcomeBanner && welcomeBanner.show && (
+          <motion.div
+            initial={{ opacity: 0, y: 60, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.92 }}
+            transition={{ type: 'spring', damping: 22, stiffness: 300 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-lg pointer-events-auto"
+          >
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#141C2E]/95 via-[#0C1222]/95 to-[#1A2238]/95 border-2 border-[#E2FF3B] backdrop-blur-xl p-4 sm:p-5 shadow-[0_15px_45px_rgba(226,255,59,0.3)] flex items-center justify-between gap-3 text-white">
+              {/* Pulsing ambient glow */}
+              <div className="absolute -left-8 -top-8 w-24 h-24 bg-[#E2FF3B]/20 rounded-full blur-xl pointer-events-none animate-pulse" />
+
+              <div className="flex items-center gap-3.5 relative z-10">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#E2FF3B] to-[#F59E0B] flex items-center justify-center text-2xl shadow-lg shrink-0 animate-bounce">
+                  🍲
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-full bg-[#E2FF3B]/20 text-[#E2FF3B] border border-[#E2FF3B]/40">
+                      Welcome, {welcomeBanner.name}!
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-white tracking-tight mt-0.5 flex items-center gap-1.5">
+                    <span>eat first thank me later</span>
+                    <span className="text-[#E2FF3B]">✨</span>
+                  </h3>
+                  <p className="text-xs text-slate-300 hidden sm:block">
+                    Your street food radar is now active. Fresh stalls & cycles live!
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 relative z-10 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    sound.playClick();
+                    setWelcomeBanner(null);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-[#E2FF3B] text-black font-extrabold text-xs hover:bg-[#cbe635] transition shadow-md cursor-pointer flex items-center gap-1"
+                >
+                  <span>Let's Eat</span>
+                  <span>😋</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWelcomeBanner(null)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center text-sm transition cursor-pointer"
+                  title="Close"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
