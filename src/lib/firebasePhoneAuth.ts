@@ -9,13 +9,39 @@ import { auth } from './firebase';
 let confirmationResult: ConfirmationResult | null = null;
 let recaptchaVerifier: RecaptchaVerifier | null = null;
 
+// Helper to ensure clean container DOM element
+function resetRecaptchaElement(containerId: string = 'recaptcha-container'): HTMLElement | null {
+  if (typeof document === 'undefined') return null;
+  const element = document.getElementById(containerId);
+  if (element && element.parentNode) {
+    const freshElement = document.createElement('div');
+    freshElement.id = containerId;
+    freshElement.className = element.className;
+    element.parentNode.replaceChild(freshElement, element);
+    return freshElement;
+  }
+  if (!element) {
+    const newElement = document.createElement('div');
+    newElement.id = containerId;
+    newElement.className = 'flex justify-center my-2';
+    document.body.appendChild(newElement);
+    return newElement;
+  }
+  return element;
+}
+
 export const firebasePhoneAuth = {
-  getRecaptchaVerifier: (containerId: string = 'recaptcha-container'): RecaptchaVerifier => {
+  getRecaptchaVerifier: (containerId: string = 'recaptcha-container', forceFresh: boolean = false): RecaptchaVerifier => {
     if (typeof window === 'undefined') {
       throw new Error('Window not defined');
     }
 
-    // Always clear existing verifier before re-instantiating to prevent "reCAPTCHA already rendered" error
+    // Reuse existing verifier if available and not forcing a fresh one
+    if (recaptchaVerifier && !forceFresh) {
+      return recaptchaVerifier;
+    }
+
+    // If forcing fresh or none exists, clean up old verifier
     if (recaptchaVerifier) {
       try {
         recaptchaVerifier.clear();
@@ -25,6 +51,9 @@ export const firebasePhoneAuth = {
       recaptchaVerifier = null;
     }
 
+    // Clean DOM element before initializing to prevent "reCAPTCHA has already been rendered in this element"
+    resetRecaptchaElement(containerId);
+
     recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
       size: 'invisible',
       callback: () => {
@@ -32,12 +61,7 @@ export const firebasePhoneAuth = {
       },
       'expired-callback': () => {
         console.warn('⚠️ Google reCAPTCHA expired. Resetting verifier.');
-        if (recaptchaVerifier) {
-          try {
-            recaptchaVerifier.clear();
-          } catch {}
-          recaptchaVerifier = null;
-        }
+        firebasePhoneAuth.clearVerifier(containerId);
       }
     });
 
@@ -61,19 +85,40 @@ export const firebasePhoneAuth = {
       console.log('📲 [FIREBASE AUTH SMS] Real SMS dispatched via Google Telecom Gateway!');
       return { success: true, confirmationResult };
     } catch (err: any) {
-      console.error('Firebase Phone Auth error:', err);
+      console.warn('Firebase Phone Auth initial attempt:', err);
+
+      // Auto-recovery: If reCAPTCHA was already rendered or expired, clean container and retry once
+      const isRecaptchaRenderError =
+        err.message?.includes('already been rendered') ||
+        err.message?.includes('reCAPTCHA') ||
+        err.code === 'auth/captcha-check-failed';
+
+      if (isRecaptchaRenderError) {
+        try {
+          console.log('🔄 Auto-recovering reCAPTCHA container and retrying SMS dispatch...');
+          firebasePhoneAuth.clearVerifier(containerId);
+          const freshVerifier = firebasePhoneAuth.getRecaptchaVerifier(containerId, true);
+          confirmationResult = await signInWithPhoneNumber(auth, fullPhone, freshVerifier);
+          console.log('📲 [FIREBASE AUTH SMS] Real SMS dispatched on auto-recovery retry!');
+          return { success: true, confirmationResult };
+        } catch (retryErr: any) {
+          err = retryErr;
+        }
+      }
+
+      console.error('Firebase Phone Auth error after recovery attempt:', err);
       let errorDetail = err.message || 'Failed to dispatch SMS to your phone.';
 
       if (err.code === 'auth/unauthorized-domain') {
         errorDetail = `Domain "${window.location.hostname}" is not authorized in Firebase Console. Please add "${window.location.hostname}" to Firebase Console -> Authentication -> Settings -> Authorized Domains.`;
       } else if (err.code === 'auth/operation-not-allowed') {
-        errorDetail = 'Phone authentication is not enabled. Please enable "Phone" provider in Firebase Console -> Authentication -> Sign-in method.';
+        errorDetail = 'Phone authentication is disabled in Firebase Console. Please enable "Phone" under Authentication -> Sign-in method.';
       } else if (err.code === 'auth/invalid-phone-number') {
-        errorDetail = 'Invalid phone number. Please enter a valid 10-digit Indian mobile number.';
+        errorDetail = 'Invalid phone number format. Please enter a valid 10-digit Indian mobile number.';
       } else if (err.code === 'auth/too-many-requests') {
         errorDetail = 'Too many requests sent to this number. Please wait a few minutes before requesting a new code.';
-      } else if (err.code === 'auth/captcha-check-failed') {
-        errorDetail = 'Google reCAPTCHA verification failed. Please refresh the page and try again.';
+      } else if (err.code === 'auth/captcha-check-failed' || err.message?.includes('already been rendered')) {
+        errorDetail = 'Security check verification is resetting. Please click "Send OTP via SMS" again.';
       } else if (err.code === 'auth/network-request-failed') {
         errorDetail = 'Network connection error. Please check your internet connection.';
       }
@@ -114,13 +159,14 @@ export const firebasePhoneAuth = {
     }
   },
 
-  clearVerifier: () => {
+  clearVerifier: (containerId: string = 'recaptcha-container') => {
     if (recaptchaVerifier) {
       try {
         recaptchaVerifier.clear();
       } catch {}
       recaptchaVerifier = null;
     }
+    resetRecaptchaElement(containerId);
     confirmationResult = null;
   }
 };
