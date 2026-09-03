@@ -17,7 +17,8 @@ import {
   Info,
   Bike,
   PhoneCall,
-  MapPin
+  MapPin,
+  MessageSquare
 } from 'lucide-react';
 import { sound } from '../utils/audioFeedback';
 import { TRANSLATIONS } from '../data/translations';
@@ -27,6 +28,7 @@ interface Card3DItemProps {
   onNavigate: (spot: FoodSpot) => void;
   onOpenDetails: (spot: FoodSpot) => void;
   onToggleSave: (spot: FoodSpot) => void;
+  onOpenChat?: (spot: FoodSpot) => void;
   isSaved?: boolean;
   priority?: boolean;
   interactiveTilt?: boolean;
@@ -38,6 +40,7 @@ export const Card3DItem: React.FC<Card3DItemProps> = ({
   onNavigate,
   onOpenDetails,
   onToggleSave,
+  onOpenChat,
   isSaved = false,
   priority = false,
   interactiveTilt = true,
@@ -258,7 +261,22 @@ export const Card3DItem: React.FC<Card3DItemProps> = ({
             </div>
 
             {/* Quick Actions Footer */}
-            <div className="pt-3 border-t border-[#222222] flex items-center gap-2 mt-2">
+            <div className="pt-3 border-t border-[#222222] flex items-center gap-1.5 sm:gap-2 mt-2">
+              {onOpenChat && (
+                <button
+                  id={`chat-btn-${spot.id}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    sound.playClick();
+                    onOpenChat(spot);
+                  }}
+                  title="Chat with stall owner"
+                  className="p-2.5 rounded-xl bg-[#1C1C1E] hover:bg-[#262629] text-[#D4D4D8] hover:text-[#E2FF3B] border border-[#2E2E32] active:scale-98 transition-all shrink-0"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-[#E2FF3B]" />
+                </button>
+              )}
+
               <button
                 id={`details-btn-${spot.id}`}
                 onClick={(e) => {
@@ -266,7 +284,7 @@ export const Card3DItem: React.FC<Card3DItemProps> = ({
                   sound.playClick();
                   onOpenDetails(spot);
                 }}
-                className="flex-1 py-2.5 px-2.5 rounded-xl bg-[#1C1C1E] hover:bg-[#262629] text-[#D4D4D8] hover:text-[#F0F0F0] text-xs font-semibold flex items-center justify-center gap-1.5 border border-[#2E2E32] active:scale-98 transition-all"
+                className="flex-1 py-2.5 px-2 rounded-xl bg-[#1C1C1E] hover:bg-[#262629] text-[#D4D4D8] hover:text-[#F0F0F0] text-xs font-semibold flex items-center justify-center gap-1 border border-[#2E2E32] active:scale-98 transition-all"
               >
                 <Info className="w-3.5 h-3.5 text-[#8E8E93]" />
                 <span>Full Spot</span>
@@ -279,7 +297,7 @@ export const Card3DItem: React.FC<Card3DItemProps> = ({
                   sound.playSuccess();
                   onNavigate(spot);
                 }}
-                className="flex-[1.4] py-2.5 px-3 rounded-xl bg-[#E2FF3B] hover:bg-[#d5f330] text-[#0A0A0A] text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-lg shadow-[#E2FF3B]/20 active:scale-98 transition-all font-display tracking-tight"
+                className="flex-[1.3] py-2.5 px-2.5 rounded-xl bg-[#E2FF3B] hover:bg-[#d5f330] text-[#0A0A0A] text-xs font-extrabold flex items-center justify-center gap-1 shadow-lg shadow-[#E2FF3B]/20 active:scale-98 transition-all font-display tracking-tight"
               >
                 <Navigation className="w-3.5 h-3.5 fill-[#0A0A0A]" />
                 <span>{t.walkNow} ({spot.stepsCount} steps)</span>

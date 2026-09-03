@@ -30,6 +30,9 @@ import { SubscriptionModal } from './components/SubscriptionModal';
 import { MovingStallPortalModal } from './components/MovingStallPortalModal';
 import { ShopOwnerPortalModal } from './components/ShopOwnerPortalModal';
 import { MovingCyclePopup } from './components/MovingCyclePopup';
+import { StallChatModal } from './components/StallChatModal';
+import { EditProfileModal } from './components/EditProfileModal';
+import { VendorCommissionModal } from './components/VendorCommissionModal';
 import { 
   Compass, 
   Heart, 
@@ -106,6 +109,10 @@ export default function App() {
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState<boolean>(false);
   const [isMovingStallPortalOpen, setIsMovingStallPortalOpen] = useState<boolean>(false);
   const [isShopOwnerPortalOpen, setIsShopOwnerPortalOpen] = useState<boolean>(false);
+  const [isProfileEditOpen, setIsProfileEditOpen] = useState<boolean>(false);
+  const [activeChatSpot, setActiveChatSpot] = useState<FoodSpot | null>(null);
+  const [isVendorCommissionOpen, setIsVendorCommissionOpen] = useState<boolean>(false);
+  const [commissionStallName, setCommissionStallName] = useState<string>('');
 
   const [navigatingSpot, setNavigatingSpot] = useState<FoodSpot | null>(null);
   const [inspectingSpot, setInspectingSpot] = useState<FoodSpot | null>(null);
@@ -528,17 +535,19 @@ export default function App() {
               )}
             </button>
 
-            {/* User Profile / Multi-Role Login Button */}
+            {/* User Profile / Edit Profile Button */}
             {currentUser ? (
               <div className="flex items-center gap-1">
                 <button
                   type="button"
+                  id="profile-edit-header-btn"
                   onClick={(e) => {
                     e.preventDefault();
                     sound.playClick();
-                    setIsLoginOpen(true);
+                    setIsProfileEditOpen(true);
                   }}
-                  className="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#1C1C1E] border border-[#2E2E32] text-xs font-mono text-[#E2FF3B] flex items-center gap-1"
+                  title="Edit Profile Details"
+                  className="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#1C1C1E] border border-[#2E2E32] text-xs font-mono text-[#E2FF3B] hover:border-[#E2FF3B]/50 flex items-center gap-1 transition-all active:scale-95"
                 >
                   <span className="text-xs">{currentUser.avatar || '👤'}</span>
                   <span className="max-w-[65px] truncate font-bold">{currentUser.name}</span>
@@ -632,6 +641,7 @@ export default function App() {
               onToggleSave={toggleSave}
               onNavigate={(spot) => setNavigatingSpot(spot)}
               onOpenDetails={(spot) => setInspectingSpot(spot)}
+              onOpenChat={(spot) => setActiveChatSpot(spot)}
               onResetDeck={() => setRadius(100)}
               currentLang={currentLang}
             />
@@ -643,6 +653,7 @@ export default function App() {
               savedSpotIds={savedSpotIds}
               onNavigate={(spot) => setNavigatingSpot(spot)}
               onOpenDetails={(spot) => setInspectingSpot(spot)}
+              onOpenChat={(spot) => setActiveChatSpot(spot)}
               onToggleSave={toggleSave}
               currentLang={currentLang}
             />
@@ -702,6 +713,10 @@ export default function App() {
         currentUser={currentUser}
         onLoginSuccess={handleLoginSuccess}
         onAddNewSpot={handleAddNewSpot}
+        onVendorRegistered={(stallName) => {
+          setCommissionStallName(stallName);
+          setIsVendorCommissionOpen(true);
+        }}
         currentLang={currentLang}
         onLanguageChange={setCurrentLang}
         initialRole={loginInitialRole}
@@ -727,6 +742,7 @@ export default function App() {
         currentLang={currentLang}
         spots={spots}
         onUpdateSpotLocation={handleUpdateSpotLocation}
+        onOpenCommissionPass={() => setIsVendorCommissionOpen(true)}
       />
 
       {/* Dedicated Fixed Shop Owner Portal (Menu & Price Editor) */}
@@ -737,6 +753,7 @@ export default function App() {
         currentLang={currentLang}
         spots={spots}
         onUpdateSpot={handleUpdateSpot}
+        onOpenCommissionPass={() => setIsVendorCommissionOpen(true)}
       />
 
       {/* Walking Route Navigation Modal */}
@@ -752,6 +769,7 @@ export default function App() {
         onClose={() => setInspectingSpot(null)}
         onNavigate={(spot) => setNavigatingSpot(spot)}
         onToggleSave={toggleSave}
+        onOpenChat={(spot) => setActiveChatSpot(spot)}
         isSaved={inspectingSpot ? savedSpotIds.has(inspectingSpot.id) : false}
         currentLang={currentLang}
       />
@@ -764,6 +782,34 @@ export default function App() {
         onRemoveSave={toggleSave}
         onNavigate={(spot) => setNavigatingSpot(spot)}
         currentLang={currentLang}
+      />
+
+      {/* Real-Time Stall Owner Chat Modal */}
+      <StallChatModal
+        isOpen={Boolean(activeChatSpot)}
+        onClose={() => setActiveChatSpot(null)}
+        spot={activeChatSpot}
+        currentUser={currentUser}
+        currentLang={currentLang}
+      />
+
+      {/* User Profile Editor Modal */}
+      <EditProfileModal
+        isOpen={isProfileEditOpen}
+        onClose={() => setIsProfileEditOpen(false)}
+        currentUser={currentUser}
+        onUpdateProfile={(updated) => setCurrentUser(updated)}
+        currentLang={currentLang}
+        onLanguageChange={setCurrentLang}
+      />
+
+      {/* Vendor Commission & Stall Activation Modal (iyyanarpriya@slc) */}
+      <VendorCommissionModal
+        isOpen={isVendorCommissionOpen}
+        onClose={() => setIsVendorCommissionOpen(false)}
+        currentUser={currentUser}
+        currentLang={currentLang}
+        stallName={commissionStallName}
       />
 
       {/* Bottom Welcome Banner: Eat first, thank me later */}

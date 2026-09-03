@@ -88,6 +88,7 @@ interface LoginModalProps {
   currentUser: UserProfile | null;
   onLoginSuccess: (user: UserProfile) => void;
   onAddNewSpot?: (newSpot: FoodSpot) => void;
+  onVendorRegistered?: (stallName: string) => void;
   currentLang: LanguageCode;
   onLanguageChange: (lang: LanguageCode) => void;
   initialRole?: UserRole;
@@ -99,6 +100,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   currentUser,
   onLoginSuccess,
   onAddNewSpot,
+  onVendorRegistered,
   currentLang,
   onLanguageChange,
   initialRole = 'customer'
@@ -396,6 +398,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
       // Broadcast and add to live radar spots
       onAddNewSpot?.(newSpot);
+      onVendorRegistered?.(newSpot.name);
     }
 
     completeLogin(userProfile);

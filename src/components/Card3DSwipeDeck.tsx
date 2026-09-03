@@ -12,6 +12,7 @@ interface Card3DSwipeDeckProps {
   onToggleSave: (spot: FoodSpot) => void;
   onNavigate: (spot: FoodSpot) => void;
   onOpenDetails: (spot: FoodSpot) => void;
+  onOpenChat?: (spot: FoodSpot) => void;
   onResetDeck: () => void;
   currentLang?: LanguageCode;
 }
@@ -22,6 +23,7 @@ export const Card3DSwipeDeck: React.FC<Card3DSwipeDeckProps> = ({
   onToggleSave,
   onNavigate,
   onOpenDetails,
+  onOpenChat,
   onResetDeck,
   currentLang = 'en',
 }) => {
@@ -247,6 +249,7 @@ export const Card3DSwipeDeck: React.FC<Card3DSwipeDeckProps> = ({
                 onNavigate={onNavigate}
                 onOpenDetails={onOpenDetails}
                 onToggleSave={onToggleSave}
+                onOpenChat={onOpenChat}
                 isSaved={savedSpotIds.has(activeSpot.id)}
                 priority={true}
                 interactiveTilt={true}

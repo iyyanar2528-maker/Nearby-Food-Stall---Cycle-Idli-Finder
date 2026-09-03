@@ -30,6 +30,7 @@ interface ShopOwnerPortalModalProps {
   currentLang: LanguageCode;
   spots: FoodSpot[];
   onUpdateSpot: (updatedSpot: FoodSpot) => void;
+  onOpenCommissionPass?: () => void;
 }
 
 export const ShopOwnerPortalModal: React.FC<ShopOwnerPortalModalProps> = ({
@@ -38,7 +39,8 @@ export const ShopOwnerPortalModal: React.FC<ShopOwnerPortalModalProps> = ({
   currentUser,
   currentLang,
   spots,
-  onUpdateSpot
+  onUpdateSpot,
+  onOpenCommissionPass
 }) => {
   const shopSpots = spots.filter((s) => s.stallType === 'fixed_stall' || s.stallType === 'small_shop' || s.stallType === 'handcart');
   const [selectedSpotId, setSelectedSpotId] = useState<string>(
@@ -201,6 +203,32 @@ export const ShopOwnerPortalModal: React.FC<ShopOwnerPortalModalProps> = ({
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Vendor Commission / Stall Pass Status Banner */}
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#E2FF3B]/10 via-[#1C1C1E] to-[#1C1C1E] border border-[#E2FF3B]/30 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#E2FF3B]/20 text-[#E2FF3B] flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-white block">Platform Pass & Promotion</span>
+                <span className="text-[10px] text-[#8E8E93] font-mono">UPI ID: iyyanarpriya@slc • Daily ₹10 / Monthly ₹250</span>
+              </div>
+            </div>
+            {onOpenCommissionPass && (
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onOpenCommissionPass();
+                  onClose();
+                }}
+                className="px-3 py-1.5 rounded-xl bg-[#E2FF3B] hover:bg-[#d4f22e] text-black font-bold text-xs font-mono shadow-md transition-all shrink-0"
+              >
+                Pass / Pay
+              </button>
+            )}
           </div>
 
           {/* Quick Metrics Bar */}

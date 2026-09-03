@@ -14,7 +14,8 @@ import {
   ChevronRight,
   Share2,
   PhoneCall,
-  Bike
+  Bike,
+  MessageSquare
 } from 'lucide-react';
 import { FastImage } from './FastImage';
 import { sound } from '../utils/audioFeedback';
@@ -25,6 +26,7 @@ interface SpotDetailModalProps {
   onClose: () => void;
   onNavigate: (spot: FoodSpot) => void;
   onToggleSave: (spot: FoodSpot) => void;
+  onOpenChat?: (spot: FoodSpot) => void;
   isSaved?: boolean;
   currentLang?: LanguageCode;
 }
@@ -34,6 +36,7 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
   onClose,
   onNavigate,
   onToggleSave,
+  onOpenChat,
   isSaved = false,
   currentLang = 'en',
 }) => {
@@ -264,14 +267,29 @@ export const SpotDetailModal: React.FC<SpotDetailModalProps> = ({
           </div>
 
           {/* Action Footer */}
-          <div className="p-4 border-t border-[#262626] bg-[#0A0A0A] flex items-center gap-3">
+          <div className="p-4 border-t border-[#262626] bg-[#0A0A0A] flex items-center gap-2.5">
+            {onOpenChat && (
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onOpenChat(spot);
+                  onClose();
+                }}
+                className="py-3 px-4 rounded-xl bg-[#1C1C1E] hover:bg-[#2C2C2E] border border-[#2E2E32] hover:border-[#E2FF3B]/50 text-white text-xs font-bold flex items-center justify-center gap-1.5 active:scale-98 transition-all shrink-0 font-mono"
+              >
+                <MessageSquare className="w-4 h-4 text-[#E2FF3B]" />
+                <span>Chat</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 sound.playSuccess();
                 onNavigate(spot);
                 onClose();
               }}
-              className="w-full py-3 rounded-xl bg-[#E2FF3B] hover:bg-[#d5f330] text-[#0A0A0A] text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-[#E2FF3B]/20 active:scale-98 transition-all font-display tracking-tight"
+              className="flex-1 py-3 rounded-xl bg-[#E2FF3B] hover:bg-[#d5f330] text-[#0A0A0A] text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-[#E2FF3B]/20 active:scale-98 transition-all font-display tracking-tight"
             >
               <Navigation className="w-4 h-4 fill-[#0A0A0A]" />
               <span>{t.walkingRoute} ({spot.distanceMeters}m)</span>

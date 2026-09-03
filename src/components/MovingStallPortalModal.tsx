@@ -33,6 +33,7 @@ interface MovingStallPortalModalProps {
   currentLang: LanguageCode;
   spots: FoodSpot[];
   onUpdateSpotLocation: (spotId: string, newDistance: number, isMoving: boolean) => void;
+  onOpenCommissionPass?: () => void;
 }
 
 export const MovingStallPortalModal: React.FC<MovingStallPortalModalProps> = ({
@@ -41,7 +42,8 @@ export const MovingStallPortalModal: React.FC<MovingStallPortalModalProps> = ({
   currentUser,
   currentLang,
   spots,
-  onUpdateSpotLocation
+  onUpdateSpotLocation,
+  onOpenCommissionPass
 }) => {
   const movingSpots = spots.filter((s) => s.stallType === 'moving_cycle');
   const [selectedSpotId, setSelectedSpotId] = useState<string>(
@@ -206,6 +208,32 @@ export const MovingStallPortalModal: React.FC<MovingStallPortalModalProps> = ({
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Platform Pass & Commission Banner */}
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#E2FF3B]/10 via-[#1C1C1E] to-[#1C1C1E] border border-[#E2FF3B]/30 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#E2FF3B]/20 text-[#E2FF3B] flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-white block">Daily Stall Pass & Promotion</span>
+                <span className="text-[10px] text-[#8E8E93] font-mono">UPI: iyyanarpriya@slc • ₹10/day or ₹250/mo</span>
+              </div>
+            </div>
+            {onOpenCommissionPass && (
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onOpenCommissionPass();
+                  onClose();
+                }}
+                className="px-3 py-1.5 rounded-xl bg-[#E2FF3B] hover:bg-[#d4f22e] text-black font-bold text-xs font-mono shadow-md transition-all shrink-0"
+              >
+                Pass / Pay
+              </button>
+            )}
           </div>
 
           {/* Current Stall Live Info Banner */}

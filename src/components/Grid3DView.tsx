@@ -8,6 +8,7 @@ interface Grid3DViewProps {
   onNavigate: (spot: FoodSpot) => void;
   onOpenDetails: (spot: FoodSpot) => void;
   onToggleSave: (spot: FoodSpot) => void;
+  onOpenChat?: (spot: FoodSpot) => void;
   currentLang?: LanguageCode;
 }
 
@@ -17,6 +18,7 @@ export const Grid3DView: React.FC<Grid3DViewProps> = ({
   onNavigate,
   onOpenDetails,
   onToggleSave,
+  onOpenChat,
   currentLang = 'en',
 }) => {
   if (spots.length === 0) {
@@ -41,6 +43,7 @@ export const Grid3DView: React.FC<Grid3DViewProps> = ({
             onNavigate={onNavigate}
             onOpenDetails={onOpenDetails}
             onToggleSave={onToggleSave}
+            onOpenChat={onOpenChat}
             isSaved={savedSpotIds.has(spot.id)}
             priority={idx < 4}
             interactiveTilt={true}
