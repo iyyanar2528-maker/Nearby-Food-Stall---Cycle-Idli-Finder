@@ -28,6 +28,7 @@ export interface MenuItem {
   nameHi?: string;
   price: number; // in Indian Rupees (₹)
   description: string;
+  image?: string;
   isBestseller?: boolean;
   isVegetarian?: boolean;
   isHalal?: boolean;

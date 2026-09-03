@@ -57,7 +57,18 @@ import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
-  const [spots, setSpots] = useState<FoodSpot[]>(INITIAL_FOOD_SPOTS);
+  const [spots, setSpots] = useState<FoodSpot[]>(() => {
+    try {
+      const custom = localStorage.getItem('budget_eats_custom_spots');
+      if (custom) {
+        const parsed = JSON.parse(custom);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return [...parsed, ...INITIAL_FOOD_SPOTS.filter(s => !parsed.some((p: any) => p.id === s.id))];
+        }
+      }
+    } catch {}
+    return INITIAL_FOOD_SPOTS;
+  });
   const [radius, setRadius] = useState<RadiusFilter>(100);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -270,6 +281,25 @@ export default function App() {
     setTimeout(() => {
       setWelcomeBanner((prev) => (prev ? { ...prev, show: false } : null));
     }, 14000);
+  };
+
+  const handleAddNewSpot = (newSpot: FoodSpot) => {
+    setSpots((prev) => [newSpot, ...prev.filter((s) => s.id !== newSpot.id)]);
+    try {
+      const custom = localStorage.getItem('budget_eats_custom_spots');
+      const existing = custom ? JSON.parse(custom) : [];
+      localStorage.setItem(
+        'budget_eats_custom_spots',
+        JSON.stringify([newSpot, ...existing.filter((s: any) => s.id !== newSpot.id)])
+      );
+    } catch {}
+    firebaseSync.broadcastStallLocation(newSpot.id, {
+      distanceMeters: newSpot.distanceMeters,
+      isMovingNow: Boolean(newSpot.isMovingNow),
+      speedKmh: newSpot.speedKmh,
+      stockCount: newSpot.stockCount,
+      ...newSpot
+    });
   };
 
   const handleLogout = () => {
@@ -671,6 +701,7 @@ export default function App() {
         onClose={() => setIsLoginOpen(false)}
         currentUser={currentUser}
         onLoginSuccess={handleLoginSuccess}
+        onAddNewSpot={handleAddNewSpot}
         currentLang={currentLang}
         onLanguageChange={setCurrentLang}
         initialRole={loginInitialRole}

@@ -50,7 +50,10 @@ export const ShopOwnerPortalModal: React.FC<ShopOwnerPortalModalProps> = ({
   const [newItemName, setNewItemName] = useState('');
   const [newItemPrice, setNewItemPrice] = useState('');
   const [newItemDesc, setNewItemDesc] = useState('');
+  const [newItemImage, setNewItemImage] = useState('https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500');
+  const [shopImage, setShopImage] = useState('');
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [isEditingPhoto, setIsEditingPhoto] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
 
@@ -62,6 +65,7 @@ export const ShopOwnerPortalModal: React.FC<ShopOwnerPortalModalProps> = ({
       if (spot) {
         setIsOpenNow(spot.isOpenNow);
         setMenuItems(spot.menu || []);
+        setShopImage(spot.image || '');
       }
     }
   }, [isOpen, selectedSpotId, spots]);
@@ -81,6 +85,17 @@ export const ShopOwnerPortalModal: React.FC<ShopOwnerPortalModalProps> = ({
     }
   };
 
+  const handleUpdateShopPhoto = (url: string) => {
+    sound.playClick();
+    setShopImage(url);
+    if (currentSpot) {
+      const updated = { ...currentSpot, image: url, thumbnail: url };
+      onUpdateSpot(updated);
+      setStatusMsg('Shop photo updated live!');
+      setTimeout(() => setStatusMsg(''), 3000);
+    }
+  };
+
   const handleAddNewMenuItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemName.trim() || !newItemPrice) return;
@@ -92,6 +107,7 @@ export const ShopOwnerPortalModal: React.FC<ShopOwnerPortalModalProps> = ({
       name: newItemName.trim(),
       price: isNaN(priceNum) ? 20 : priceNum,
       description: newItemDesc.trim() || 'Freshly prepared specialty',
+      image: newItemImage || 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500',
       isVegetarian: true,
       isBestseller: true
     };
@@ -240,6 +256,66 @@ export const ShopOwnerPortalModal: React.FC<ShopOwnerPortalModalProps> = ({
             </button>
           </div>
 
+          {/* Shop Front Photo Card */}
+          <div className="p-3.5 rounded-2xl bg-[#1C1C1E] border border-[#2E2E32] space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#F0F0F0]">Shop Front Photo</span>
+              <button
+                type="button"
+                onClick={() => setIsEditingPhoto(!isEditingPhoto)}
+                className="text-[11px] font-mono text-[#E2FF3B] hover:underline"
+              >
+                {isEditingPhoto ? 'Cancel' : 'Change Photo'}
+              </button>
+            </div>
+
+            <div className="relative h-28 rounded-xl overflow-hidden border border-white/10 bg-black/40">
+              <img
+                src={shopImage || currentSpot?.image || 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800'}
+                alt="Shop Front"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {isEditingPhoto && (
+              <div className="space-y-2 pt-1">
+                <input
+                  type="url"
+                  placeholder="Paste new image URL"
+                  value={shopImage}
+                  onChange={(e) => setShopImage(e.target.value)}
+                  className="w-full px-3 py-1.5 rounded-lg bg-[#121212] border border-[#2E2E32] text-xs text-white focus:outline-none focus:border-[#E2FF3B]"
+                />
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { name: 'Cycle Cart', url: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800' },
+                    { name: 'Vada Pav Stall', url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800' },
+                    { name: 'Dosa Joint', url: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800' }
+                  ].map((p, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleUpdateShopPhoto(p.url)}
+                      className="text-[10px] font-mono p-1 rounded-lg border border-[#262626] bg-[#121212] text-[#8E8E93] hover:text-white truncate"
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (shopImage) handleUpdateShopPhoto(shopImage);
+                    setIsEditingPhoto(false);
+                  }}
+                  className="w-full py-1.5 rounded-lg bg-[#E2FF3B] text-black font-bold text-xs"
+                >
+                  Save Photo
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Menu Items Manager */}
           <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-[#2E2E32] space-y-3">
             <div className="flex items-center justify-between">
@@ -288,6 +364,37 @@ export const ShopOwnerPortalModal: React.FC<ShopOwnerPortalModalProps> = ({
                   onChange={(e) => setNewItemDesc(e.target.value)}
                   className="w-full px-3 py-1.5 rounded-lg bg-[#1C1C1E] border border-[#2E2E32] text-xs text-[#F0F0F0] placeholder-[#5C5C60] focus:outline-none focus:border-[#E2FF3B]"
                 />
+                
+                {/* Food Image Selector */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1 overflow-x-auto pb-1">
+                    {[
+                      { name: 'Idli', url: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500' },
+                      { name: 'Dosa', url: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=500' },
+                      { name: 'Vada Pav', url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500' },
+                      { name: 'Chai', url: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=500' }
+                    ].map((f, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setNewItemImage(f.url)}
+                        className={`text-[9px] font-mono px-2 py-0.5 rounded border shrink-0 ${
+                          newItemImage === f.url ? 'bg-[#E2FF3B] text-black font-bold' : 'bg-[#1C1C1E] text-[#8E8E93]'
+                        }`}
+                      >
+                        {f.name}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="url"
+                    placeholder="Food Photo URL (optional)"
+                    value={newItemImage}
+                    onChange={(e) => setNewItemImage(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-lg bg-[#1C1C1E] border border-[#2E2E32] text-xs text-[#F0F0F0] placeholder-[#5C5C60] focus:outline-none focus:border-[#E2FF3B]"
+                  />
+                </div>
+
                 <button
                   type="submit"
                   className="w-full py-2 rounded-lg bg-[#E2FF3B] text-[#0A0A0A] font-bold text-xs shadow"
@@ -302,8 +409,13 @@ export const ShopOwnerPortalModal: React.FC<ShopOwnerPortalModalProps> = ({
               {menuItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#121212] border border-[#262626]"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#121212] border border-[#262626] gap-2.5"
                 >
+                  <img
+                    src={item.image || 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500'}
+                    alt={item.name}
+                    className="w-9 h-9 rounded-lg object-cover shrink-0 border border-white/10"
+                  />
                   <div className="min-w-0 flex-1 pr-2">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-bold text-[#F0F0F0] truncate">
