@@ -458,7 +458,8 @@ export const api = {
           paymentId: `TXN_${Date.now()}_UPI`,
           selectedSpotId: data.selectedSpotId || (plan.targetRole === 'customer' ? 'spot-cycle-1' : undefined),
           selectedSpotName: data.selectedSpotName || (plan.targetRole === 'customer' ? 'Muthu Anna Cycle Idli' : undefined),
-          specialInstructions: data.specialInstructions?.trim()
+          specialInstructions: data.specialInstructions?.trim(),
+          qrPassCode: `PASS-${Date.now().toString().slice(-6)}`
         };
 
         const existing = getLocalItem<UserSubscription[]>('budget_eats_subscriptions', []);
@@ -555,6 +556,7 @@ export const api = {
           spotName: data.spotName || 'Muthu Anna Cycle Idli',
           items: data.items || [],
           totalAmount: data.totalAmount || 50,
+          paymentMethod: data.paymentMethod || 'UPI / GPay',
           status: 'confirmed',
           createdAt: new Date().toISOString(),
           paymentStatus: 'paid',

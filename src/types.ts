@@ -8,6 +8,7 @@ export interface UserProfile {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   role: UserRole;
   language: LanguageCode;
   stateRegion: StateRegion;
@@ -133,7 +134,7 @@ export interface UserSubscription {
   selectedSpotId?: string;
   selectedSpotName?: string;
   specialInstructions?: string;
-  qrPassCode: string;
+  qrPassCode?: string;
 }
 
 export interface OrderItem {
@@ -153,11 +154,13 @@ export interface CustomerOrder {
   spotName: string;
   items: OrderItem[];
   totalAmount: number;
-  paymentMethod: string;
-  status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+  paymentMethod?: string;
+  status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled' | 'confirmed';
   isSubscriptionDelivery?: boolean;
   createdAt: string;
   deliveryNotes?: string;
+  deliveryMode?: string;
+  paymentStatus?: 'pending' | 'paid' | 'failed' | string;
 }
 
 export interface LiveBroadcastState {

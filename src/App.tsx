@@ -169,7 +169,8 @@ export default function App() {
     const interval = setInterval(() => {
       api.broadcast.getMovingCycles().then((res) => {
         if (res.broadcasts) {
-          const map = new Map(res.broadcasts.map(b => [b.spotId, b]));
+          const map = new Map<string, any>();
+          res.broadcasts.forEach((b: any) => map.set(b.spotId, b));
           setSpots((prev) =>
             prev.map((s) => {
               if (map.has(s.id)) {

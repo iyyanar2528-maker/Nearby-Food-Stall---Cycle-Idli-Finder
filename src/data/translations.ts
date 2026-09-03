@@ -23,6 +23,16 @@ export interface TranslationDict {
   otpHelper: string;
   getOtpBtn: string;
   verifyLoginBtn: string;
+  emailLabel: string;
+  emailPlaceholder: string;
+  passwordLabel: string;
+  passwordPlaceholder: string;
+  signInBtn: string;
+  signUpBtn: string;
+  continueWithGoogle: string;
+  noAccountText: string;
+  haveAccountText: string;
+  forgotPasswordText: string;
   logoutBtn: string;
   welcomeBack: string;
   nearBySpots: string;
@@ -111,6 +121,16 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationDict> = {
     otpHelper: "Test OTP auto-fills or enter 123456",
     getOtpBtn: "Send Verification OTP",
     verifyLoginBtn: "Verify & Enter Food Radar",
+    emailLabel: "Email / Gmail Address",
+    emailPlaceholder: "yourname@gmail.com",
+    passwordLabel: "Password",
+    passwordPlaceholder: "At least 6 characters",
+    signInBtn: "Sign In",
+    signUpBtn: "Create Account",
+    continueWithGoogle: "Continue with Google",
+    noAccountText: "Don't have an account?",
+    haveAccountText: "Already have an account?",
+    forgotPasswordText: "Forgot password?",
     logoutBtn: "Logout",
     welcomeBack: "Vanakkam / Namaskar",
     nearBySpots: "Local Stalls Nearby",
@@ -196,6 +216,16 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationDict> = {
     otpHelper: "சோதனை OTP தானாக நிரப்பப்படும் அல்லது 123456 உள்ளிடவும்",
     getOtpBtn: "OTP பெறுக",
     verifyLoginBtn: "சரிபார்த்து நுழையவும்",
+    emailLabel: "மின்னஞ்சல் / Gmail முகவரி",
+    emailPlaceholder: "yourname@gmail.com",
+    passwordLabel: "கடவுச்சொல் (Password)",
+    passwordPlaceholder: "குறைந்தது 6 எழுத்துக்கள்",
+    signInBtn: "உள்நுழைக (Sign In)",
+    signUpBtn: "புதிய கணக்கு துவங்குக (Sign Up)",
+    continueWithGoogle: "Google மூலம் தொடர்க",
+    noAccountText: "கணக்கு இல்லையா?",
+    haveAccountText: "ஏற்கனவே கணக்கு உள்ளதா?",
+    forgotPasswordText: "கடவுச்சொல் மறந்துவிட்டதா?",
     logoutBtn: "வெளியேறு",
     welcomeBack: "வணக்கம்! நல்வரவு",
     nearBySpots: "அருகிலுள்ள உள்ளூர் கடைகள்",
@@ -281,6 +311,16 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationDict> = {
     otpHelper: "टेस्ट OTP अपने-आप भरा जाएगा या 123456 दर्ज करें",
     getOtpBtn: "OTP कोड भेजें",
     verifyLoginBtn: "सत्यापित करें और रडार खोलें",
+    emailLabel: "ईमेल / Gmail एड्रेस",
+    emailPlaceholder: "yourname@gmail.com",
+    passwordLabel: "पासवर्ड (Password)",
+    passwordPlaceholder: "कम से कम 6 अक्षर",
+    signInBtn: "साइन इन करें (Sign In)",
+    signUpBtn: "नया अकाउंट बनाएं (Sign Up)",
+    continueWithGoogle: "Google के साथ जारी रखें",
+    noAccountText: "अकाउंट नहीं है?",
+    haveAccountText: "पहले से अकाउंट है?",
+    forgotPasswordText: "पासवर्ड भूल गए?",
     logoutBtn: "लॉगआउट",
     welcomeBack: "नमस्ते / स्वागत है",
     nearBySpots: "पास के लोकल फूड स्टॉल",
