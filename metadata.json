@@ -1,0 +1,1 @@
+{"name":"Nearby Food Stall \u0026 Cycle Idli Finder","description":"Ultra-local food stall and moving cycle vendor tracker for Maharashtra and Tamil Nadu with real-time 100-150m proximity alerts, OTP login, and tri-lingual support (English, Tamil, Hindi).","requestFramePermissions":["geolocation"],"majorCapabilities":["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]}

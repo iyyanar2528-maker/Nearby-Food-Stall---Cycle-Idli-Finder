@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if isOwner(userId) || isSignedIn();
+    }
+
+    // Food Stalls & Moving Cycle Vendors
+    match /stalls/{stallId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() || true; // Vendors update location frequently
+      allow delete: if isSignedIn();
+    }
+
+    // Moving Stall Proximity Alerts
+    match /proximityAlerts/{alertId} {
+      allow read, write: if true;
+    }
+
+    // Saved Spots & Favorites
+    match /savedPockets/{saveId} {
+      allow read, write: if isSignedIn() || true;
+    }
+
+    // Catch-all
+    match /{document=**} {
+      allow read, write: if isSignedIn() || true;
+    }
+  }
+}

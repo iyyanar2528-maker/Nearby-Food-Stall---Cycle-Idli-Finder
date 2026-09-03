@@ -1,0 +1,8 @@
+{
+  "firestore": {
+    "databaseId": "ai-studio-nearbybudgeteats-8379fbe2-c8b6-4ad1-a4a9-8e9ebc0683a1",
+    "rules": "firestore.rules",
+    "edition": "ENTERPRISE",
+    "dataAccessMode": "FIRESTORE_NATIVE"
+  }
+}

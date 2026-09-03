@@ -1,0 +1,91 @@
+{
+  "entities": {
+    "users": {
+      "title": "User Profile",
+      "description": "Registered app user, customer, or food stall vendor",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["customer", "vendor"] },
+        "language": { "type": "string", "enum": ["en", "ta", "hi"] },
+        "stateRegion": { "type": "string", "enum": ["all", "maharashtra", "tamil_nadu"] },
+        "avatar": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "phone", "role"]
+    },
+    "stalls": {
+      "title": "Food Stalls & Mobile Cycle Vendors",
+      "description": "Local food stalls, street carts, and live moving cycle stalls in Maharashtra & Tamil Nadu",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "vendorId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "vendorPhone": { "type": "string" },
+        "name": { "type": "string" },
+        "nameTa": { "type": "string" },
+        "nameHi": { "type": "string" },
+        "stallType": { "type": "string", "enum": ["moving_cycle", "fixed_stall", "handcart", "small_shop"] },
+        "category": { "type": "string" },
+        "stateRegion": { "type": "string", "enum": ["maharashtra", "tamil_nadu"] },
+        "cityArea": { "type": "string" },
+        "image": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "topDeal": {
+          "type": "object",
+          "properties": {
+            "item": { "type": "string" },
+            "price": { "type": "number" },
+            "badge": { "type": "string" }
+          }
+        },
+        "distanceMeters": { "type": "number" },
+        "walkingTimeSeconds": { "type": "number" },
+        "stepsCount": { "type": "number" },
+        "bearingDegrees": { "type": "number" },
+        "address": { "type": "string" },
+        "currentLocation": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" },
+            "lastUpdated": { "type": "string" }
+          }
+        },
+        "isOpenNow": { "type": "boolean" },
+        "isMovingNow": { "type": "boolean" },
+        "speedKmh": { "type": "number" },
+        "dietaryTags": { "type": "array", "items": { "type": "string" } },
+        "paymentTypes": { "type": "array", "items": { "type": "string" } },
+        "description": { "type": "string" },
+        "secretTip": { "type": "string" },
+        "menu": { "type": "array", "items": { "type": "object" } },
+        "photos": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "stallType", "stateRegion"]
+    },
+    "proximityAlerts": {
+      "title": "Moving Stall Proximity Notifications",
+      "description": "Alert triggered when a moving cycle stall crosses within 100-150m of a customer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "stallId": { "type": "string" },
+        "stallName": { "type": "string" },
+        "stallType": { "type": "string" },
+        "speciality": { "type": "string" },
+        "price": { "type": "number" },
+        "distanceMeters": { "type": "number" },
+        "vendorPhone": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "stallId", "stallName", "distanceMeters"]
+    }
+  }
+}
