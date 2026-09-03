@@ -13,13 +13,22 @@ interface PendingEmailAuth {
   stallId?: string;
   otp: string;
   expiresAt: number;
+  isRealEmailDelivered: boolean;
 }
 
 const pendingAuthStore = new Map<string, PendingEmailAuth>();
 
-// Generate secure 6-digit OTP
 function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+export interface SendEmailOtpResponse {
+  success: boolean;
+  otp?: string;
+  message: string;
+  error?: string;
+  isRealEmailDelivered?: boolean;
+  deliveryProvider?: string;
 }
 
 export const emailOtpAuth = {
@@ -37,7 +46,7 @@ export const emailOtpAuth = {
     businessAddress?: string;
     fssaiNumber?: string;
     stallId?: string;
-  }): Promise<{ success: boolean; otp?: string; message: string; error?: string }> => {
+  }): Promise<SendEmailOtpResponse> => {
     const cleanEmail = data.email.trim().toLowerCase();
 
     if (!cleanEmail || !cleanEmail.includes('@')) {
@@ -48,7 +57,39 @@ export const emailOtpAuth = {
       return { success: false, message: '', error: 'Password must be at least 6 characters.' };
     }
 
-    const otpCode = generateOtp();
+    let otpCode = generateOtp();
+    let isRealEmailDelivered = false;
+    let deliveryProvider = 'LOCAL_SIMULATOR';
+
+    // Attempt real email dispatch via backend Express API (/api/auth/send-email-otp)
+    try {
+      const resp = await fetch('/api/auth/send-email-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          name: data.name?.trim() || cleanEmail.split('@')[0],
+          role: data.role || 'customer'
+        })
+      });
+
+      if (resp.ok) {
+        const resData = await resp.json();
+        if (resData.otp) {
+          otpCode = resData.otp;
+        }
+        if (resData.isDelivered) {
+          isRealEmailDelivered = true;
+          deliveryProvider = resData.provider || 'Gmail/SMTP';
+          console.log(`📬 [REAL EMAIL SENT] OTP delivered directly to inbox: ${cleanEmail}`);
+        } else {
+          console.log(`ℹ️ [EMAIL DISPATCH INFO] Real email not sent because: ${resData.error || 'EMAIL_USER not set in .env'}`);
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Backend email API unreachable, using client OTP:', apiErr);
+    }
+
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 mins
 
     const record: PendingEmailAuth = {
@@ -62,7 +103,8 @@ export const emailOtpAuth = {
       fssaiNumber: data.fssaiNumber?.trim(),
       stallId: data.stallId,
       otp: otpCode,
-      expiresAt
+      expiresAt,
+      isRealEmailDelivered
     };
 
     // Store in memory
@@ -83,12 +125,14 @@ export const emailOtpAuth = {
       console.warn('Firestore Email OTP write fallback:', e);
     }
 
-    console.log(`📧 [EMAIL OTP AUTH] 6-Digit code dispatched to ${cleanEmail}: ${otpCode}`);
-
     return {
       success: true,
       otp: otpCode,
-      message: `A 6-digit OTP code has been dispatched to ${cleanEmail}`
+      isRealEmailDelivered,
+      deliveryProvider,
+      message: isRealEmailDelivered
+        ? `Real email containing verification code sent to ${cleanEmail}`
+        : `Verification code generated for ${cleanEmail}`
     };
   },
 
@@ -139,7 +183,7 @@ export const emailOtpAuth = {
       id: `user-email-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '-')}`,
       name: record.name,
       email: cleanEmail,
-      phone: '', // No SMS / Phone needed
+      phone: '',
       role: record.role,
       language: record.language,
       stateRegion: record.stateRegion,
@@ -173,7 +217,7 @@ export const emailOtpAuth = {
    */
   resendEmailOtp: async (
     email: string
-  ): Promise<{ success: boolean; otp?: string; message: string; error?: string }> => {
+  ): Promise<SendEmailOtpResponse> => {
     const cleanEmail = email.trim().toLowerCase();
     const existing = pendingAuthStore.get(cleanEmail);
 

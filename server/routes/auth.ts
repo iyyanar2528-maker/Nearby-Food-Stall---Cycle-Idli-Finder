@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { store, SEED_USERS } from '../data/store';
 import { database } from '../db/database';
 import { smsGateway } from '../services/smsGateway';
+import { emailGateway } from '../services/emailGateway';
 import { UserProfile, UserRole } from '../types';
 
 export const authRouter = Router();
@@ -186,3 +187,38 @@ authRouter.get('/me/:userId', (req: Request, res: Response) => {
     user
   });
 });
+
+// 7. Send Real Email OTP via Gmail / SMTP
+authRouter.post('/send-email-otp', async (req: Request, res: Response) => {
+  const { email, name, role } = req.body;
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    return res.status(400).json({ error: 'Valid email address is required' });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // Send real email via configured SMTP / Gmail
+  const dispatchResult = await emailGateway.sendOtpEmail(cleanEmail, otp, name);
+
+  return res.json({
+    success: true,
+    email: cleanEmail,
+    otp,
+    isDelivered: dispatchResult.isDelivered,
+    provider: dispatchResult.provider,
+    error: dispatchResult.error,
+    message: dispatchResult.isDelivered
+      ? `Real email containing verification OTP sent to ${cleanEmail}`
+      : `Email dispatch skipped: ${dispatchResult.error || 'Configure EMAIL_USER and EMAIL_PASS in .env'}`
+  });
+});
+
+// 8. Email Gateway Status
+authRouter.get('/email-gateway-status', (req: Request, res: Response) => {
+  return res.json({
+    isConfigured: emailGateway.isConfigured(),
+    provider: (process.env.EMAIL_USER || process.env.GMAIL_USER) ? 'Gmail SMTP' : 'Unconfigured'
+  });
+});
+

@@ -160,6 +160,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [otp, setOtp] = useState('');
   const [dispatchedOtp, setDispatchedOtp] = useState<string | null>(null);
   const [resendTimer, setResendTimer] = useState(0);
+  const [isRealEmailSent, setIsRealEmailSent] = useState(false);
+  const [deliveryProvider, setDeliveryProvider] = useState('');
 
   // Status
   const [isLoading, setIsLoading] = useState(false);
@@ -275,6 +277,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     }
 
     setDispatchedOtp(res.otp || null);
+    setIsRealEmailSent(Boolean(res.isRealEmailDelivered));
+    setDeliveryProvider(res.deliveryProvider || '');
     setOtp('');
     setResendTimer(60);
     setStep('otp');
@@ -293,8 +297,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
     if (res.success) {
       setDispatchedOtp(res.otp || null);
+      setIsRealEmailSent(Boolean(res.isRealEmailDelivered));
+      setDeliveryProvider(res.deliveryProvider || '');
       setResendTimer(60);
-      setSuccessMsg(`Fresh verification code sent to ${email}`);
+      setSuccessMsg(
+        res.isRealEmailDelivered
+          ? `Fresh verification code emailed to ${email}`
+          : `Fresh verification code generated for ${email}`
+      );
       sound.playSuccess();
     } else {
       setErrorMsg(res.error || 'Failed to resend verification OTP.');
@@ -1126,19 +1136,38 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           {step === 'otp' && (
             <div className="space-y-4">
               {/* Email Dispatch Notice */}
-              <div className="p-3.5 rounded-2xl bg-[#1C1C1E] border border-[#30D158]/30 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-xl bg-[#30D158]/15 text-[#30D158] flex items-center justify-center shrink-0 mt-0.5">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-mono font-bold text-[#30D158]">
-                    Verification OTP Sent to Email
+              {isRealEmailSent ? (
+                <div className="p-3.5 rounded-2xl bg-[#1C1C1E] border border-[#30D158]/40 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-[#30D158]/15 text-[#30D158] flex items-center justify-center shrink-0 mt-0.5">
+                    <CheckCircle2 className="w-5 h-5 text-[#30D158]" />
                   </div>
-                  <p className="text-[11px] text-[#A1A1AA] font-mono mt-0.5 leading-snug">
-                    We sent a 6-digit code to <b className="text-white">{email}</b>. Enter it below to complete sign-in.
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-mono font-bold text-[#30D158] flex items-center gap-1.5">
+                      <span>Real Email Dispatched via {deliveryProvider}</span>
+                      <span className="text-[9px] px-1.5 py-0.2 bg-[#30D158]/20 text-[#30D158] rounded">Delivered</span>
+                    </div>
+                    <p className="text-[11px] text-[#A1A1AA] font-mono mt-0.5 leading-snug">
+                      We sent the 6-digit verification OTP directly to <b className="text-white">{email}</b>. Please check your inbox & Spam/Junk folder!
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="p-3.5 rounded-2xl bg-[#1C1C1E] border border-[#F59E0B]/30 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-[#F59E0B]/15 text-[#F59E0B] flex items-center justify-center shrink-0 mt-0.5">
+                    <Mail className="w-4 h-4 text-[#F59E0B]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-mono font-bold text-[#F59E0B] flex items-center gap-1.5">
+                      <span>Verification Code Ready</span>
+                      <span className="text-[9px] px-1.5 py-0.2 bg-[#F59E0B]/20 text-[#F59E0B] rounded font-mono">Quick Access</span>
+                    </div>
+                    <p className="text-[11px] text-[#A1A1AA] font-mono mt-0.5 leading-snug">
+                      To receive real emails in your personal inbox, configure <code className="text-[#E2FF3B]">EMAIL_USER</code> & <code className="text-[#E2FF3B]">EMAIL_PASS</code> in <code className="text-[#E2FF3B]">.env</code>.
+                      Your code for <b className="text-white">{email}</b> is displayed below:
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Account Info & Change Button */}
               <div className="p-3 rounded-2xl bg-[#1C1C1E] border border-[#2E2E32] flex items-center justify-between text-xs font-mono">
