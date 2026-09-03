@@ -12,6 +12,23 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules/firebase')) {
+              return 'vendor-firebase';
+            }
+            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/motion')) {
+              return 'vendor-react';
+            }
+            if (id.includes('node_modules/lucide-react') || id.includes('node_modules/canvas-confetti')) {
+              return 'vendor-ui';
+            }
+          }
+        }
+      }
+    },
     server: {
       port: 3000,
       host: '0.0.0.0',

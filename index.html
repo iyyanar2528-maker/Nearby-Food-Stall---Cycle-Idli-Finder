@@ -16,19 +16,6 @@
   </head>
   <body class="bg-[#0A0A0A] text-[#F0F0F0] antialiased selection:bg-[#E2FF3B]/30 selection:text-[#E2FF3B]">
     <div id="root"></div>
-    <script>
-      (function() {
-        var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        var script = document.createElement('script');
-        script.type = 'module';
-        if (isLocal) {
-          script.src = '/src/main.tsx';
-        } else {
-          script.crossOrigin = 'anonymous';
-          script.src = './assets/index-CygnSuhk.js';
-        }
-        document.body.appendChild(script);
-      })();
-    </script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
